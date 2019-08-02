@@ -11,6 +11,7 @@ numpy = "*"
 pandas = "*"
 seaborn = "*"
 scikit-learn = "*"
+hbscan = "*"
 
 [requires]
 python_version = "3.6"
