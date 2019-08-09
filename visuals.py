@@ -12,8 +12,18 @@ get_ipython().run_line_magic('matplotlib', 'inline')
 
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+from matplotlib.font_manager import FontProperties
 import pandas as pd
 import numpy as np
+from sklearn.preprocessing import MinMaxScaler
+
+# Color map
+CMAP = [
+	"red", "blue", "gray", "green",
+	"orange", "purple", "pink", "maroon",
+	"cyan", "magenta", "navy", "black",
+	"olive", "yellow"]
+
 
 def pca_results(good_data, pca):
     '''
@@ -75,13 +85,10 @@ def cluster_results(reduced_data, preds, centers, pca_samples):
 	# Generate the cluster plot
 	fig, ax = plt.subplots(figsize = (14,8))
 
-	# Color map
-	cmap = cm.get_cmap('gist_rainbow')
-
 	# Color the points based on assigned cluster
 	for i, cluster in plot_data.groupby('Cluster'):   
 	    cluster.plot(ax = ax, kind = 'scatter', x = 'Dimension 1', y = 'Dimension 2', \
-	                 color = cmap((i)*1.0/(len(centers)-1)), label = 'Cluster %i'%(i), s=30);
+	                 color = CMAP((i)*1.0/(len(centers)-1)), label = 'Cluster %i'%(i), s=30);
 
 	# Plot centers with indicators
 	for i, c in enumerate(centers):
@@ -99,22 +106,18 @@ def cluster_results(reduced_data, preds, centers, pca_samples):
 def cluster_results(reduced_data, preds, pca_samples, centers=[]):
     '''
     Visualizes the PCA-reduced cluster data in two dimensions
-    Adds cues for cluster centers and student-selected sample data
+    Adds cues for cluster centers and selected sample data
     '''
-
-    predictions = pd.DataFrame(preds, columns = ['Cluster'])
-    plot_data = pd.concat([predictions, reduced_data], axis = 1)
+    plot_data = reduced_data.copy()
+    plot_data.insert(0, "Cluster", preds)
 
     # Generate the cluster plot
     fig, ax = plt.subplots(figsize = (14,8))
 
-    # Color map
-    cmap = ["purple", "brown", "green", "blue", "red", "magenta", "black", "yellow"]
-
     # Color the points based on assigned cluster
     for i, cluster in plot_data.groupby('Cluster'):   
         cluster.plot(ax = ax, kind = 'scatter', x = 'Dimension 1', y = 'Dimension 2', \
-                     color=cmap[i], label = 'Cluster %i'%(i), s=30);
+                     color=CMAP[i], label = 'Cluster %i'%(i), s=30);
 
     # Plot centers with indicators
     for i, c in enumerate(centers):
@@ -190,15 +193,12 @@ def channel_results(reduced_data, outliers, pca_samples):
 	# Generate the cluster plot
 	fig, ax = plt.subplots(figsize = (14,8))
 
-	# Color map
-	cmap = cm.get_cmap('gist_rainbow')
-
 	# Color the points based on assigned Channel
 	labels = ['Hotel/Restaurant/Cafe', 'Retailer']
 	grouped = labeled.groupby('Channel')
 	for i, channel in grouped:   
 	    channel.plot(ax = ax, kind = 'scatter', x = 'Dimension 1', y = 'Dimension 2', \
-	                 color = cmap((i-1)*1.0/2), label = labels[i-1], s=30);
+	                 color = CMAP((i-1)*1.0/2), label = labels[i-1], s=30);
 	    
 	# Plot transformed sample points   
 	for i, sample in enumerate(pca_samples):
@@ -208,3 +208,16 @@ def channel_results(reduced_data, outliers, pca_samples):
 
 	# Set plot title
 	ax.set_title("PCA-Reduced Data Labeled by 'Channel'\nTransformed Sample Data Circled");
+
+
+def compare_cluster_means(good_data_with_label):
+	scaler = MinMaxScaler()
+	cluster_analysis_df = good_data_with_label.groupby("Cluster").mean().reset_index().drop(
+		columns=["Cluster", 'CREDIT_LIMIT', 'MINIMUM_PAYMENTS'])
+	cluster_analysis_df = pd.DataFrame(
+		scaler.fit_transform(cluster_analysis_df), columns=cluster_analysis_df.columns) * 100
+	ax = cluster_analysis_df.plot.bar(figsize=(12, 5), legend=True, color=CMAP)
+	fontP = FontProperties()
+	fontP.set_size('x-small')
+	ax.legend(bbox_to_anchor=(0.9, 0.5), prop=fontP)
+	return ax
