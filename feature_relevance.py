@@ -1,9 +1,9 @@
 """Create dataframe showing the feature importance or relevance"""
+# pylint: disable=invalid-name
 import random
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import f1_score
 
 RANDOM_STATE = 0
 random.seed(RANDOM_STATE)
@@ -14,18 +14,20 @@ def predict_feature(feature_to_predict: str, data: pd.core.frame.DataFrame):
     X = data.copy()
     y = X[feature_to_predict]
     X.drop([feature_to_predict], axis=1, inplace=True)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.25, random_state=0)
     regressor = RandomForestRegressor(random_state=42)
     regressor.fit(X_train, y_train)
     importances = regressor.feature_importances_
     prediction_score = regressor.score(X_test, y_test)
     cols = X.columns.to_list()
-    dat = {x[0]: x[1] for x in zip(cols, importances) }
+    dat = {x[0]: x[1] for x in zip(cols, importances)}
     dat[feature_to_predict] = 0
     return prediction_score, dat
-    
-    
+
+
 def cc_feature_relevance(raw_data: pd.core.frame.DataFrame):
+    """Calculate feature-feature relevance"""
     data = raw_data.copy()
     data.drop(['CUST_ID'], axis=1, inplace=True)
     data.dropna(inplace=True)
@@ -38,6 +40,4 @@ def cc_feature_relevance(raw_data: pd.core.frame.DataFrame):
         features_data["_score"].append(score)
         for _featr, relevance in feature_importance.items():
             features_data[_featr].append(relevance)
-        
     return pd.DataFrame(data=features_data)
-
